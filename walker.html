@@ -101,6 +101,7 @@ main { max-width: 580px; margin: 0 auto; padding: 16px 16px 40px; display: grid;
 .frac > span:first-child { border-bottom: .07em solid currentColor; padding: 0 .12em; }
 .rt { white-space: nowrap; }
 .rad { border-top: .07em solid currentColor; padding: .04em .08em 0; margin-left: -.02em; }
+.and { font: 400 .55em var(--f-ui); color: var(--muted); margin: 0 .5em; vertical-align: middle; }
 
 .axis-wrap { user-select: none; -webkit-user-select: none; margin: 0 -6px; }
 svg.axis { display: block; width: 100%; height: auto; overflow: visible; }
@@ -381,6 +382,50 @@ window.addEventListener('error', function (e) {
     const k = isqrt(n), v = Math.sqrt(n);
     return { html: sqrtH(n), v, explain: `${M(sqrtH(n) + ' ≈ ' + fmtDec(v))}, since ${M(k + '² = ' + k * k)} and ${M((k + 1) + '² = ' + (k + 1) ** 2)}.` };
   }
+  /* task mix: weights per task type (only enabled types take part) */
+  const WEIGHTS = { draw: 20, read: 20, place: 35, between: 25 };
+  function pickKind(kinds) {
+    let r = Math.random() * kinds.reduce((s, k) => s + WEIGHTS[k], 0);
+    for (const k of kinds) { r -= WEIGHTS[k]; if (r < 0) return k; }
+    return kinds[kinds.length - 1];
+  }
+  const fracVal = (n, d) => {
+    const g = gcd(n, d); n /= g; d /= g;
+    return d === 1 ? fmt(n) : (n < 0 ? '−' : '') + fracH(Math.abs(n), d);
+  };
+  const paren = n => n < 0 ? `(${fmt(n)})` : fmt(n);
+  // "Mark the number": half classic numbers, half calculations
+  function genPlaceAll() {
+    const r = Math.random();
+    if (r < 0.5) return genPlace();
+    if (r < 0.65) {
+      const d = rint(3, 7), a = rint(-7, 7 - d), b = a + d, v = (a + b) / 2, min = a - rint(0, 8 - d);
+      return { mid: true, html: `${fmt(a)}<span class="and">and</span>${fmt(b)}`, v, ax: { min, max: min + 8 },
+        explain: `The midpoint is the average of the two numbers: ${M(`(${fmt(a)} + ${paren(b)}) ÷ 2 = ${fmt(a + b)} ÷ 2 = ${fmtDec(v)}`)}.` };
+    }
+    if (r < 0.77) {
+      let n; do { n = rint(2, 30); } while (isqrt(n) ** 2 === n);
+      let k; do { k = rint(-4, 4); } while (!k);
+      const plus = coin(0.6), s = Math.sqrt(n), v = plus ? k + s : k - s;
+      const h = `${fmt(k)} ${plus ? '+' : '−'} ${sqrtH(n)}`;
+      return { html: h, v, explain: `${M(sqrtH(n) + ' ≈ ' + fmtDec(s))}, so ${M(`${h} ≈ ${fmt(k)} ${plus ? '+' : '−'} ${fmtDec(s)} = ${fmtDec(v)}`)}.` };
+    }
+    if (r < 0.9) {
+      const b = pick([2, 3, 4, 5, 6]), d = pick([2, 3, 4, 5, 6].filter(x => x !== b));
+      let a, c; do { a = rint(1, 2 * b - 1); } while (a % b === 0); do { c = rint(1, 2 * d - 1); } while (c % d === 0);
+      const plus = coin(0.55), L = b * d / gcd(b, d), A = a * L / b, C = c * L / d, N = plus ? A + C : A - C;
+      const op = plus ? '+' : '−', h = `${fracH(a, b)} ${op} ${fracH(c, d)}`;
+      let ex = `${h} = ${fracH(A, L)} ${op} ${fracH(C, L)} = ${N === 0 ? '0' : (N < 0 ? '−' : '') + fracH(Math.abs(N), L)}`;
+      if (N !== 0 && gcd(N, L) > 1) ex += ` = ${fracVal(N, L)}`;
+      if (N % L !== 0) ex += ` ≈ ${fmtDec(N / L)}`;
+      return { html: h, v: N / L, explain: `Use a common denominator: ${M(ex)}.` };
+    }
+    const p = pick([10, 20, 25, 30, 40, 50, 60, 75, 150]);
+    const base = p > 100 ? rint(2, 8) : rint(2, 20), v = p * base / 100;
+    return { html: `${p}% <span class="and">of</span>${base}`, v,
+      explain: `${M(`${p}% = ${fmtDec(p / 100)}`)}, so ${M(`${p}% of ${base} = ${fmtDec(p / 100)} · ${base} = ${fmtDec(v)}`)}.` };
+  }
+
   function genBetween() {
     const r = Math.random();
     if (r < 0.32) {
@@ -469,7 +514,7 @@ window.addEventListener('error', function (e) {
   function newTask() {
     releaseHold();
     const kinds = Object.keys(TYPES).filter(k => S.types[k]);
-    const kind = pick(kinds.length ? kinds : Object.keys(TYPES));
+    const kind = pickKind(kinds.length ? kinds : Object.keys(TYPES));
     if (kind === 'draw') {
       const spec = genSpec();
       const ray = spec.lo == null || spec.hi == null;
@@ -485,10 +530,10 @@ window.addEventListener('error', function (e) {
       T = { kind, spec, variant: pick(['std', 'std', 'int']), ax, options: shuffle([spec, ...distractors(spec, 3)]), sel: null };
       T.scene = sceneFor(spec, ax);
     } else if (kind === 'place') {
-      const num = genPlace();
+      const num = genPlaceAll();
       const min = Math.floor(num.v) - rint(1, 6);
-      T = { kind, num, ax: { min, max: min + 8 } };
-      const c = []; for (let v = min + 1; v < min + 8; v++) c.push(v);
+      T = { kind, num, ax: num.ax || { min, max: min + 8 } };
+      const c = []; for (let v = T.ax.min + 1; v < T.ax.max; v++) c.push(v);
       G.target = startAt(c, v => Math.abs(v - num.v) < 1.5);
     } else {
       const num = genBetween();
@@ -636,7 +681,7 @@ window.addEventListener('error', function (e) {
         return `<button class="opt ${cls}" type="button" data-opt="${i}" aria-pressed="${T.sel === i}" ${dis}>${ineqH(o, T.variant)}</button>`;
       }).join('') + `</div>`;
     } else {
-      h += `<h2 class="prompt">${T.kind === 'place' ? 'Walk to roughly where this number is on the line' : 'Walk into the gap between the two consecutive integers this number lies between'}</h2>`;
+      h += `<h2 class="prompt">${T.kind === 'place' ? (T.num.mid ? 'Walk to the midpoint between these two numbers' : 'Walk to roughly where this number is on the line') : 'Walk into the gap between the two consecutive integers this number lies between'}</h2>`;
       h += `<div class="expr">${T.num.html}</div>`;
       h += `<div class="axis-wrap" id="axisWrap"></div>`;
       h += `<div class="pad">
