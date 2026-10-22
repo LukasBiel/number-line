@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Math Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=STIX+Two+Text:ital,wght@0,400;1,400&display=swap">
+<style>
+/* Layout: graph-paper notebook — a short heading and a column of large game tiles, each with a small live illustration of the game */
+:root {
+  --paper: #f5f7fc;
+  --grid: #e1e7f4;
+  --card: #ffffff;
+  --ink: #17213b;
+  --muted: #5b6784;
+  --line: #ccd5e8;
+  --pen: #2146c4;
+  --pen-soft: #e2e8fb;
+  --gold: #c98a06;
+  --skin: #f2c9a0;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-ui: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-math: "STIX Two Text", "Cambria Math", "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1322; --grid: #19213a; --card: #151c31; --ink: #e6ebf8; --muted: #96a2c0;
+    --line: #2c3758; --pen: #7f9cff; --pen-soft: #1e2a55; --gold: #f2bd45; --skin: #d9a77c; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1322; --grid: #19213a; --card: #151c31; --ink: #e6ebf8; --muted: #96a2c0;
+  --line: #2c3758; --pen: #7f9cff; --pen-soft: #1e2a55; --gold: #f2bd45; --skin: #d9a77c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh;
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--ink); font: 16px/1.5 var(--f-ui);
+}
+main { max-width: 580px; margin: 0 auto; padding: 28px 16px 40px; display: grid; gap: 16px; }
+h1 { margin: 0; font: 800 2rem/1.05 var(--f-display); letter-spacing: -.02em; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); max-width: 46ch; }
+
+.tile {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; text-decoration: none; color: inherit;
+  background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px;
+  box-shadow: 0 1px 0 var(--line), 0 12px 30px -20px color-mix(in srgb, var(--pen) 50%, transparent);
+  transition: transform .15s ease, border-color .15s ease;
+}
+.tile:hover { transform: translateY(-2px); border-color: var(--pen); }
+.tile:focus-visible { outline: 3px solid var(--pen); outline-offset: 3px; }
+.art { background: var(--paper); border-radius: 14px; border: 1px solid var(--line); overflow: hidden; }
+.art svg { display: block; width: 100%; height: auto; }
+.tile h2 { margin: 0; font: 800 1.35rem/1.15 var(--f-display); }
+.tile p { margin: 0; color: var(--muted); font-size: .95rem; }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.stat { font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stat b { color: var(--ink); }
+.stat .gold { color: var(--gold); }
+.play { font: 700 1rem/1 var(--f-display); color: var(--card); background: var(--pen); border-radius: 12px; padding: 11px 16px; }
+.small-link { font-size: .88rem; color: var(--muted); }
+.small-link a { color: var(--pen); }
+
+/* illustration strokes */
+.ax { stroke: var(--ink); stroke-width: 1.6; fill: none; }
+.tk { stroke: var(--ink); stroke-width: 1.2; }
+.tl { fill: var(--muted); font: 11px var(--f-ui); text-anchor: middle; }
+.rope { stroke: var(--pen); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.dot { fill: var(--pen); stroke: var(--pen); stroke-width: 2; }
+.man { stroke: var(--ink); stroke-width: 2.6; fill: none; stroke-linecap: round; }
+.man .shirt { stroke: var(--pen); stroke-width: 4; }
+.man .head { fill: var(--skin); }
+.eqt { font: 400 22px var(--f-math); fill: var(--ink); }
+.eqt.old { fill: var(--muted); font-size: 18px; }
+.eqt i, .eqt tspan.i { font-style: italic; }
+.note { font: 400 16px var(--f-math); fill: var(--pen); }
+.bar { stroke: var(--pen); stroke-width: 1.5; }
+@media (prefers-reduced-motion: no-preference) {
+  .walk { animation: walk 4s ease-in-out infinite alternate; }
+  @keyframes walk { from { transform: translateX(0); } to { transform: translateX(70px); } }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Math Games</h1>
+  <p class="lead">Pick a game. Your points are saved on this device.</p>
+
+  <a class="tile" href="walker.html">
+    <div class="art" aria-hidden="true">
+      <svg viewBox="0 0 360 110">
+        <line class="ax" x1="10" y1="78" x2="346" y2="78"/><path class="ax" d="M338,73 L347,78 L338,83"/>
+        <g>
+          <line class="tk" x1="30" y1="72" x2="30" y2="84"/><text class="tl" x="30" y="100">−3</text>
+          <line class="tk" x1="75" y1="72" x2="75" y2="84"/><text class="tl" x="75" y="100">−2</text>
+          <line class="tk" x1="120" y1="72" x2="120" y2="84"/><text class="tl" x="120" y="100">−1</text>
+          <line class="tk" x1="165" y1="72" x2="165" y2="84"/><text class="tl" x="165" y="100">0</text>
+          <line class="tk" x1="210" y1="72" x2="210" y2="84"/><text class="tl" x="210" y="100">1</text>
+          <line class="tk" x1="255" y1="72" x2="255" y2="84"/><text class="tl" x="255" y="100">2</text>
+          <line class="tk" x1="300" y1="72" x2="300" y2="84"/><text class="tl" x="300" y="100">3</text>
+        </g>
+        <g class="walk">
+          <path class="rope" d="M120,78 V54 H184"/>
+          <g class="man" transform="translate(190,78)">
+            <path d="M0,-22 L5,-1 M0,-22 L-5,-1"/><path class="shirt" d="M0,-37 L0,-22"/>
+            <path d="M0,-35 L-3,-29 L-6,-24 M0,-35 L4,-27"/><circle class="head" cx="1" cy="-44" r="6.5"/>
+          </g>
+        </g>
+        <circle class="dot" cx="120" cy="78" r="6"/>
+      </svg>
+    </div>
+    <h2>Number Line Walker</h2>
+    <p>Walk along the number line to mark numbers, find where roots and fractions sit, and pull a rope to draw inequalities.</p>
+    <div class="foot"><span class="stat" id="walkerStat">Not played yet</span><span class="play">Play →</span></div>
+  </a>
+
+  <a class="tile" href="solver.html">
+    <div class="art" aria-hidden="true">
+      <svg viewBox="0 0 360 110">
+        <text class="eqt old" x="150" y="32" text-anchor="end">3<tspan class="i" font-style="italic">x</tspan> + 5</text>
+        <text class="eqt old" x="165" y="32" text-anchor="middle">=</text>
+        <text class="eqt old" x="180" y="32">20</text>
+        <line class="bar" x1="246" y1="16" x2="246" y2="38"/><text class="note" x="254" y="32">− 5</text>
+        <text class="eqt" x="150" y="68" text-anchor="end">3<tspan class="i" font-style="italic">x</tspan></text>
+        <text class="eqt" x="165" y="68" text-anchor="middle">=</text>
+        <text class="eqt" x="180" y="68">15</text>
+        <line class="bar" x1="246" y1="52" x2="246" y2="74"/><text class="note" x="254" y="68">÷ 3</text>
+        <text class="eqt" x="150" y="100" text-anchor="end" style="fill:var(--pen)"><tspan class="i" font-style="italic">x</tspan></text>
+        <text class="eqt" x="165" y="100" text-anchor="middle" style="fill:var(--pen)">=</text>
+        <text class="eqt" x="180" y="100" style="fill:var(--pen)">5</text>
+      </svg>
+    </div>
+    <h2>Equation Solver</h2>
+    <p>Choose what to do to both sides of the equation. The app does the arithmetic, you decide the steps until <i>x</i> stands alone.</p>
+    <div class="foot"><span class="stat" id="solverStat">Not played yet</span><span class="play">Play →</span></div>
+  </a>
+
+  <p class="small-link">Prefer tapping the line instead of walking? <a href="./">Open the classic number line</a>.</p>
+</main>
+<script>
+(function () {
+  function read(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+  var w = read('numberLineWalker.v1');
+  if (w && w.n) document.getElementById('walkerStat').innerHTML = 'Points <b>' + w.score + '</b> · best <b>' + w.best + '</b> · tasks <b>' + w.n + '</b>';
+  var s = read('equationSolver.v1');
+  if (s && s.solved) document.getElementById('solverStat').innerHTML = 'Solved <b>' + s.solved + '</b> · <b class="gold">★ ' + s.stars + '</b>';
+})();
+</script>
+</body>
+</html>
